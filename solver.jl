@@ -1,6 +1,6 @@
 import SciMLBase
 using Unitful: Quantity, ustrip
-using DiffEqBase: InternalITP, IntervalNonlinearProblem, ReturnCode, nextfloat_tdir
+using DiffEqBase: InternalITP, IntervalNonlinearProblem, ReturnCode, nextfloat_tdir, prevfloat_tdir
 
 function SciMLBase.solve(prob::IntervalNonlinearProblem{IP, Tuple{T, T}}, alg::InternalITP,
     args...;
