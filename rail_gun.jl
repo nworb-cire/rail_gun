@@ -13,16 +13,18 @@ p = (
     M=200g, 
     R=1e-5Ω, 
     Eₛ=100V, 
+    F=2N, # friction
 )
 
-const rail_length = 0.3m
+const rail_length = 0.5m
+const turns = 2 # the number of turns (including the rails) making the magnetic field
+@assert turns >= 1 # there must at least the rails generating a field
 
 function eq!(du, u, p, t)
     d, d′, I, _ = u
-
-    d″ = I^2 * μ / (π * p.M)
-    I′ = ((π / μ) * (p.Eₛ - p.R*I) - d′*I) / d
-    P = I * p.Eₛ
+    d″ = (I^2 * μ * turns / (π * p.M)) - (p.F/p.M)*(d'>0)
+    I′ = ((π / (turns*μ)) * (p.Eₛ - p.R*I) - d′*I) / d
+    P = I * p.Eₛ # Eric, I don't know how you derived this equation, so I don't how to put the number of turns into it, if at all. what is P?
     du .= [d′, d″, I′, P]
     return nothing
 end
@@ -44,8 +46,9 @@ sol = solve(prob, Tsit5() ; callback=cb)
 using DataFrames
 df = DataFrame()
 
-for M ∈ 20g:20g:200g, R ∈ 10.0.^(-5:0.2:-2) .*Ω, Eₛ ∈ 100V:50V:800V
-    sol = solve(remake(prob; p=(; M, R, Eₛ)), Tsit5() ; callback=cb)
+F=2N
+for M ∈ 4g:1g:6g, R ∈ 10.0.^(-3:0.2:0) .*Ω, Eₛ ∈ 200V:50V:1300V
+    local sol = solve(remake(prob; p=(; M, R, Eₛ,F)), Tsit5() ; callback=cb)
     println(M, R, Eₛ, sol.t[end], sol.u[end][2])
     push!(df, (M=M, R=R, Eₛ=Eₛ, t=sol.t[end], v=sol.u[end][2], energy=sol.u[end][4], retcode=sol.retcode))
 end
