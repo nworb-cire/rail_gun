@@ -1,6 +1,6 @@
 using DifferentialEquations
 using Plots
-using Unitful: Quantity, m, cm, s, ms, A, V, Ω, g, N, J
+using Unitful: Quantity, m, cm, s, ms, A, V, Ω, g, N, J, F, @u_str, ustrip
 using Distributions
 
 include("solver.jl")
@@ -11,9 +11,11 @@ const grav = 9.81m/s^2
 
 
 default_params = (
-    M=200g, 
-    R=1e-5Ω, 
-    Eₛ=100V, 
+    M=50g, 
+    R=0.3Ω, 
+    Eₛ=800V, 
+    Eᵦ=700V,
+    C=1.1F,
     c=0.2,  # coefficient of friction, tungsten on tungsten
 )
 
@@ -27,8 +29,10 @@ function eq!(du, u, p, t)
     Fₙ = p.M * grav
     Fₛ = p.c * Fₙ * sign(d′)
     d″ = (I^2 * μ * turns / (π * p.M)) - (Fₛ / p.M)
-    I′ = ((π / (turns*μ)) * (p.Eₛ - p.R*I) - d′*I) / d
-    P = I * p.Eₛ
+
+    E = (p.Eₛ - p.Eᵦ) * (exp(ustrip(-t / p.R * p.C)) + 1.0)
+    I′ = ((π / (turns*μ)) * (E - p.R*I) - d′*I) / d
+    P = I * E
     du .= [d′, d″, I′, P]
     return nothing
 end
@@ -40,7 +44,7 @@ u₀ = [
     0.0J,
 ]
 
-prob = ODEProblem(eq!, u₀, (0.0s, 50ms), default_params)
+prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
 
 # callback: stop when distance is equal to rail length
 cb = ContinuousCallback((u, t, i) -> ustrip(rail_length - u[1]), terminate!)
