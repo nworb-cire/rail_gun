@@ -13,8 +13,6 @@ const grav = 9.81m/s^2
 default_params = (
     M=50g, 
     R=0.3Ω, 
-    Eₛ=800V, 
-    Eᵦ=700V,
     C=1.1F,
     c=0.2,  # coefficient of friction, tungsten on tungsten
 )
@@ -24,16 +22,17 @@ const turns = 2  # the number of turns (including the rails) making the magnetic
 @assert turns >= 1  # there must at least the rails generating a field
 
 function eq!(du, u, p, t)
-    d, d′, I, _ = u
+    d, d′, I, Eₛ, _ = u
 
-    Fₙ = p.M * grav
+    Fₙ = 10N #I don't know, but I suspect this is enough (about 5 newtons per pound)
     Fₛ = p.c * Fₙ * sign(d′)
     d″ = (I^2 * μ * turns / (π * p.M)) - (Fₛ / p.M)
-
-    E = (p.Eₛ - p.Eᵦ) * (exp(ustrip(-t / p.R * p.C)) + 1.0)
-    I′ = ((π / (turns*μ)) * (E - p.R*I) - d′*I) / d
+    I′ = ((π / (turns*μ)) * (Eₛ - p.R*I) - d′*I) / d
+    Eᵦ = (μ*turns / π)(d′I + I′d)
+    E = Eᵦ-Eₛ
+    Eₛ′ = (E)/(p.R*p.C)
     P = I * E
-    du .= [d′, d″, I′, P]
+    du .= [d′, d″, I′, Eₛ′, P]
     return nothing
 end
 
