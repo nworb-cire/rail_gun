@@ -13,22 +13,21 @@ const grav = 9.81m/s^2
 default_params = (
     M=50g, 
     R=0.3Ω, 
-    C=1.1F,
+    C=.0011F,
     c=0.2,  # coefficient of friction, tungsten on tungsten
+    n=1, #number of turns
 )
 
 const rail_length = 0.5m
-const turns = 2  # the number of turns (including the rails) making the magnetic field
-@assert turns >= 1  # there must at least the rails generating a field
 
 function eq!(du, u, p, t)
     d, d′, I, Eₛ, _ = u
 
     Fₙ = 10N #I don't know, but I suspect this is enough (about 5 newtons per pound)
     Fₛ = p.c * Fₙ * sign(d′)
-    d″ = (I^2 * μ * turns / (π * p.M)) - (Fₛ / p.M)
-    I′ = ((π / (turns*μ)) * (Eₛ - p.R*I) - d′*I) / d
-    Eᵦ = (μ*turns / π)(d′I + I′d)
+    d″ = (I^2 * μ * p.n / (π * p.M)) - (Fₛ / p.M)
+    I′ = ((π / (p.n*μ)) * (Eₛ - p.R*I) - d′*I) / d
+    Eᵦ = (μ*p.n / π)*(d′*I + I′*d)
     E = Eᵦ-Eₛ
     Eₛ′ = (E)/(p.R*p.C)
     P = I * E
@@ -40,6 +39,7 @@ u₀ = [
     1cm,
     0.0m/s,
     0.0A,
+    800.0V,
     0.0J,
 ]
 
@@ -53,10 +53,19 @@ sol = solve(prob, Tsit5() ; callback=cb)
 using DataFrames
 df = DataFrame()
 
-for M ∈ 4g:1g:6g, R ∈ 10.0.^(-3:0.2:0) .*Ω, Eₛ ∈ 200V:50V:1300V
-    local sol = solve(remake(prob; p=(; M, R, Eₛ, default_params.c)), Tsit5() ; callback=cb)
-    println(M, R, Eₛ, sol.t[end], sol.u[end][2])
-    push!(df, (M=M, R=R, Eₛ=Eₛ, t=sol.t[end], v=sol.u[end][2], energy=sol.u[end][4], retcode=sol.retcode))
+for M ∈ 4g:1g:6g, R ∈ 10.0.^(-2:0.2:0) .*Ω, Eₛ ∈ 300V:200V:1300V, n ∈ 1:10:1
+    u₀ = [
+        1cm,
+        0.0m/s,
+        0.0A,
+        Eₛ,
+        0.0J,
+    ]
+    prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
+    C = 1000F
+    local sol = solve(remake(prob; p=(; M, R, C, default_params.c, n)), Tsit5() ; callback=cb)
+    println(M, R, Eₛ, sol.t[end], sol.u[end][2], sol.u[end][3], sol.u[4])
+    push!(df, (M=M, R=R, Eₛ=Eₛ, C=C, turns=n, t=sol.t[end], v=sol.u[end][2], amps=sol.u[end][3], voltage=sol.u[end][4], power=sol.u[end][5], retcode=sol.retcode))
 end
 
 using CSV
