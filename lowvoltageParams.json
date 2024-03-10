@@ -1,0 +1,15 @@
+{
+    "capacitance": 0.4,
+    "numCapacitors":8,
+    "capacitorVoltage": 50,
+    "internalResistance": 0.004,
+    "coefficientOfFriction": 0.2,
+    "contactPressure": 15.0,
+    "railLength":0.61,
+    "projectileDiameter":0.009,
+    "projectileLength":0.018,
+    "projectileDensity":8960000.0,
+    "numberOfCoils":30,
+    "wireArea":0.00016,
+    "capacitorSpecs": "https://www.mouser.com/ProductDetail/Cornell-Dubilier-CDE/500C404U050FG2D?qs=l0stRQ51CLDSpTd%2F%2FNYDLw%3D%3D"
+}

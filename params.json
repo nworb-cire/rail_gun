@@ -1,0 +1,14 @@
+{
+    "capacitance": 0.051,
+    "numCapacitors":4,
+    "capacitorVoltage": 195.0,
+    "internalResistance": 0.0079,
+    "coefficientOfFriction": 0.2,
+    "contactPressure": 15.0,
+    "railLength":0.61,
+    "projectileDiameter":0.0035,
+    "projectileLength":0.009,
+    "projectileDensity":8960000.0,
+    "numberOfCoils":5,
+    "wireDiameter":0.003175
+}
