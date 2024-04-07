@@ -6,7 +6,8 @@ using JSON
 
 include("solver.jl")
 
-const μ = 4e-7π*N/A^2
+const μ₀ = 4e-7π*N/A^2
+μ = μ₀
 
 default_params = (
     M=50g, 
@@ -45,10 +46,15 @@ Rᵢ = params["internalResistance"]*Ω/nₚ
 c = params["coefficientOfFriction"]
 Fₙ = params["contactPressure"]*N
 n = params["numberOfCoils"]
-Aₗ = params["wireArea"]m^2
+Wᵥ = params["wireWidth"]m
+Wₕ = params["wireHeight"]m
+Aₗ = Wᵥ*Wₕ
 rₚ = params["projectileDiameter"]m/2
 lₚ = params["projectileLength"]m
 Dₚ = params["projectileDensity"]g/m^3
+vᵢ = params["initialVelocity"]m/s
+μᵣ = params["relativePermeability"]
+μ = μᵣ * μ₀
 M = Dₚ*lₚ*π*rₚ^2
 ρ = 1.77 * 10^-8*Ω*m # resistivity of copper
 Rₘ = ρ*n*rail_length/Aₗ
@@ -56,14 +62,14 @@ println(Rₘ, " vs ", Rᵢ)
 R = Rᵢ + Rₘ 
 u₀ = [
     0m,
-    0.0m/s,
+    vᵢ,
     0.0A,
     Eₛ,
     0.0J,
 ]
 prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
 sol = solve(remake(prob; p=(; M, R, C, c, n, Fₙ)), Tsit5() ; callback=cb)
-Eₚ = uconvert(J, 0.5 * M*(sol.u[end][2]^2))
+Eₚ = uconvert(J, 0.5 * M*(sol.u[end][2]^2 - vᵢ^2))
 Eᵦ = uconvert(J, 0.5 * C * (Eₛ^2 -sol.u[end][4]^2))
 println(Eₚ, Eᵦ)
 efficiency = Eₚ/Eᵦ

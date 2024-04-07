@@ -1,14 +1,18 @@
 {
-    "capacitance": 9,
-    "numCapacitors":40,
-    "capacitorVoltage": 28,
-    "internalResistance": 0.06,
+    "capacitance": 62,
+    "numCapacitors":1,
+    "capacitorVoltage": 18,
+    "internalResistance": 0.022,
     "coefficientOfFriction": 0.2,
     "contactPressure": 15.0,
-    "railLength":0.61,
-    "projectileDiameter":0.009,
-    "projectileLength":0.018,
-    "projectileDensity":8960000.0,
-    "numberOfCoils":10,
-    "wireArea":0.00006
+    "railLength":0.15,
+    "railHeight":0.01,
+    "railRelativePermeability": 40000,
+    "projectileDiameter":0.003,
+    "projectileLength":0.003,
+    "projectileDensity":19280000.0,
+    "numberOfCoils":20,
+    "wireWidth":0.004,
+    "wireHeight":0.002,
+    "initialVelocity":0
 }
