@@ -112,13 +112,14 @@ We will use the equation for $V_b$ as it is during the computation of $V_s$. But
 \[V_b = V_s - IR \]
 \[\frac{1}{2\pi}\frac{dI}{dt}\left(\mu_0Y(J+G) + \mu_dw(H+F)\right) + \frac{1}{2\pi}I\left(\mu_0YE\frac{dd}{dt} + \mu_dwD\frac{dd}{dt}\right) = V_s - IR \]
 \[\frac{dI}{dt} = \frac{2\pi V_s - 2\pi IR - I\left(\mu_0YE\frac{dd}{dt} + \mu_dwD\frac{dd}{dt}\right)}{\mu_0Y(J+G) + \mu_dw(H+F)} \]
+\[\frac{dd}{dt} = \frac{2\pi V_s - 2\pi IR - \frac{dI}{dt}\left(\mu_0Y(J+G) + \mu_dw(H+F)\right)}{I\left(\mu_0YE + \mu_dwD\right)} \]
 
 Now that we have $V_b$ (which is the voltage pushing back against the supply voltage due to changing flux, faraday's law), we can talk about $V_s$, the source voltage. The source voltage is due to a capacitor. Capacitors decay exponentially to an input voltage. I.e. if we have the capacitor at 100 volts, and we're "charging" it at 80 volts, it will decay to 80 volts. You can read more \href{https://physics.stackexchange.com/questions/800396/discharge-of-a-capacitor-with-variable-backvoltage}{here}, where I got the following equation.
 
 \[RC\frac{dV_s}{dt} + V_s = V_b \]
 \[\frac{dV_s}{dt}= \frac{V_b - V_s}{RC} \]
 
-And we have one last variable to talk about, $\frac{d^2d}{dd^2}$. How the heck is the projectile going to start moving? from wikipedia article on the lorentz force we have:
+And we have one last variable to talk about, $\frac{d^2d}{dt^2}$. How the heck is the projectile going to start moving? from wikipedia article on the lorentz force we have:
 
 \[ f = Il\times B \]
 
@@ -128,7 +129,12 @@ This entire time we've been thinking about things as scalars, and I sure as heck
 \[f = I^2w\frac{\mu}{2\pi}M(d) \]
 \[f = I^2w\frac{\mu}{2\pi}\left(M_{1:N}(d) + M_0(d)\right) \]
 \[f = I^2w\frac{\mu}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) \]
-\[f=m\frac{dd^2}{d^2t} \]
-\[\frac{dd^2}{d^2t} = m^{-1}I^2w\frac{\mu}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) \]
+
+Here $f$ is the lorentz force. The total forces acting on the projectile are $f_{net}=f-f_s$ where $f_s$ is the force due to friction against the rails.
+
+\[f_{net}=m\frac{dd^2}{d^2t} \]
+\[\frac{dd^2}{d^2t} = m^{-1}\left(I^2w\frac{\mu}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) - f_s\right) \]
+
+And... I think that's it. That's everything. There should now be an equation for each of the four output variables now. It's time to implement this in the code! Good luck dear reader!
 
 \end{document}
