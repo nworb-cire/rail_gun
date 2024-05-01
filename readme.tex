@@ -117,7 +117,7 @@ We will use the equation for $V_b$ as it is during the computation of $V_s$. But
 Now that we have $V_b$ (which is the voltage pushing back against the supply voltage due to changing flux, faraday's law), we can talk about $V_s$, the source voltage. The source voltage is due to a capacitor. Capacitors decay exponentially to an input voltage. I.e. if we have the capacitor at 100 volts, and we're "charging" it at 80 volts, it will decay to 80 volts. You can read more \href{https://physics.stackexchange.com/questions/800396/discharge-of-a-capacitor-with-variable-backvoltage}{here}, where I got the following equation.
 
 \[RC\frac{dV_s}{dt} + V_s = V_b \]
-\[\frac{dV_s}{dt}= \frac{V_b - V_s}{RC} \]
+\[\frac{dV_s}{dt}= \frac{V_b - V_s}{RC} = \frac{-I}{C}\]
 
 And we have one last variable to talk about, $\frac{d^2d}{dt^2}$. How the heck is the projectile going to start moving? from wikipedia article on the lorentz force we have:
 
@@ -126,14 +126,14 @@ And we have one last variable to talk about, $\frac{d^2d}{dt^2}$. How the heck i
 This entire time we've been thinking about things as scalars, and I sure as heck ain't gonna change that now. So we will assume the $B$ vector and $Il$ vectors are perfectly perpendicular. It should be noted that the $l$ in the equation from wikipedia is what we've been calling $w$, the width of the projectile. $B$ is of course a function of $x$, and in this case, it's when $x=d$, the distance of the projectile down the rails.
 
 \[f = IwB(d) \]
-\[f = I^2w\frac{\mu}{2\pi}M(d) \]
-\[f = I^2w\frac{\mu}{2\pi}\left(M_{1:N}(d) + M_0(d)\right) \]
-\[f = I^2w\frac{\mu}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) \]
+\[f = I^2w\frac{\mu_p}{2\pi}M(d) \]
+\[f = I^2w\frac{\mu_p}{2\pi}\left(M_{1:N}(d) + M_0(d)\right) \]
+\[f = I^2w\frac{\mu_p}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) \]
 
 Here $f$ is the lorentz force. The total forces acting on the projectile are $f_{net}=f-f_s$ where $f_s$ is the force due to friction against the rails.
 
 \[f_{net}=m\frac{dd^2}{d^2t} \]
-\[\frac{dd^2}{d^2t} = m^{-1}\left(I^2w\frac{\mu}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) - f_s\right) \]
+\[\frac{dd^2}{d^2t} = m^{-1}\left(I^2w\frac{\mu_p}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) - f_s\right) \]
 
 And... I think that's it. That's everything. There should now be an equation for each of the four output variables now. It's time to implement this in the code! Good luck dear reader!
 

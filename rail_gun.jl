@@ -7,7 +7,6 @@ using JSON
 include("solver.jl")
 
 const μ₀ = 4e-7π*N/A^2
-μ = μ₀
 
 default_params = (
     M=50g, 
@@ -21,16 +20,31 @@ params = JSON.parsefile(ARGS[1])
 const rail_length = params["railLength"] * m
 
 function eq!(du, u, p, t)
-    d, d′, I, Eₛ, _ = u
-
+    d, d′, I, Vₛ, _ = u
+    r = p.Wᵣ + p.rₚ # r is the radius from the center of the bore to the edge of the rail
+    Y = 2*r + 2*p.n*p.Wᵥ # Y is the total width
+    X = rail_length
+    Alist = [r+n*p.Wᵥ for n=1:p.n]
+    M = sum([ ((X-d)/(A^2+(X-d)^2)^0.5 + d/(A^2+d^2)^0.5)/A for A in Alist ])
+    M += d / (r^2+d^2)^0.5 / r
     Fₛ = p.c * p.Fₙ * sign(d′)
-    d″ = (I^2 * μ * p.n / (π * p.M)) - (Fₛ / p.M)
-    I′ = ((π / μ) * (Eₛ - p.R*I) - d′*I) / (p.n*rail_length + d)
-    Eᵦ = (μ*p.n / π)*(d′*I + I′*d)
-    E = Eᵦ-Eₛ
-    Eₛ′ = E/(p.R*p.C)
-    P = I * E
-    du .= [d′, d″, I′, Eₛ′, P]
+    d″ = (I^2*p.rₚ*p.μₚ*M / (π * p.M)) - (Fₛ / p.M)
+
+    D = lₚ/(lₚ^2 + r^2)^0.5/r
+    E = ((X-d)/((d-X)^2+r^2)^0.5 + d/(d^2+r^2)^0.5)/r
+    F = ((r^2+(d+lₚ)^2)^0.5-(r^2+lₚ^2)^0.5+r-(r^2+d^2)^0.5)/r
+    G = ((r^2+X^2)^0.5-(r^2+(d-X)^2)^0.5-r+(r^2+d^2)^0.5)/r
+    H = sum([ ((A^2+(d+lₚ)^2)^0.5 - (A^2 +(X-d-lₚ)^2)^0.5+(A^2+(X-d)^2)^0.5-(A^2+d^2)^0.5)/A for A in Alist])
+    J = sum([ 2*((A^2+X^2)^0.5-A)/A for A in Alist])
+
+    #I′ = ((π / μₚ) * (Vₛ - p.R*I) - d′*I) / (p.n*X + d)
+    μ₋ = p.μₚ - μ₀
+    I′ = (2*π*Vₛ - 2*π*IR - I*(μ₀*Y*E*d′+μ₋*2*p.rₚ*D*d′))/(μ₀*Y*(J+G)+μ₋*2*p.rₚ*(H+F))
+    d′ = (2*π*Vₛ - 2*π*IR - I′*(μ₀*Y*(J+G)+μ₋*2*p.rₚ*(H+F)))/(μ₀*Y*E+μ₋*2*p.rₚ*D)
+    V = Vᵦ-Vₛ
+    Vₛ′ = -I/p.C
+    P = I * V
+    du .= [d′, d″, I′, Vₛ′, P]
     return nothing
 end
 
@@ -50,11 +64,12 @@ Wᵥ = params["wireWidth"]m
 Wₕ = params["wireHeight"]m
 Aₗ = Wᵥ*Wₕ
 rₚ = params["projectileDiameter"]m/2
+Wᵣ = params["railWidth"]m
 lₚ = params["projectileLength"]m
 Dₚ = params["projectileDensity"]g/m^3
 vᵢ = params["initialVelocity"]m/s
 μᵣ = params["relativePermeability"]
-μ = μᵣ * μ₀
+μₚ = μᵣ * μ₀
 M = Dₚ*lₚ*π*rₚ^2
 ρ = 1.77 * 10^-8*Ω*m # resistivity of copper
 Rₘ = ρ*n*rail_length/Aₗ
@@ -68,7 +83,7 @@ u₀ = [
     0.0J,
 ]
 prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
-sol = solve(remake(prob; p=(; M, R, C, c, n, Fₙ)), Tsit5() ; callback=cb)
+sol = solve(remake(prob; p=(; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ, μₚ)), Tsit5() ; callback=cb)
 Eₚ = uconvert(J, 0.5 * M*(sol.u[end][2]^2 - vᵢ^2))
 Eᵦ = uconvert(J, 0.5 * C * (Eₛ^2 -sol.u[end][4]^2))
 println(Eₚ, Eᵦ)
