@@ -20,7 +20,7 @@ params = JSON.parsefile(ARGS[1])
 const rail_length = params["railLength"] * m
 
 function eq!(du, u, p, t)
-    d, d′, I, Vₛ, _ = u
+    d, d′, I, I′, Vₛ = u
     r = p.Wᵣ + p.rₚ # r is the radius from the center of the bore to the edge of the rail
     Y = 2*r + 2*p.n*p.Wᵥ # Y is the total width
     X = rail_length
@@ -29,6 +29,7 @@ function eq!(du, u, p, t)
     M += d / (r^2+d^2)^0.5 / r
     Fₛ = p.c * p.Fₙ * sign(d′)
     d″ = (I^2*p.rₚ*p.μₚ*M / (π * p.M)) - (Fₛ / p.M)
+    Vₛ′ = -I/p.C
 
     D = lₚ/(lₚ^2 + r^2)^0.5/r
     E = ((X-d)/((d-X)^2+r^2)^0.5 + d/(d^2+r^2)^0.5)/r
@@ -37,14 +38,18 @@ function eq!(du, u, p, t)
     H = sum([ ((A^2+(d+lₚ)^2)^0.5 - (A^2 +(X-d-lₚ)^2)^0.5+(A^2+(X-d)^2)^0.5-(A^2+d^2)^0.5)/A for A in Alist])
     J = sum([ 2*((A^2+X^2)^0.5-A)/A for A in Alist])
 
-    #I′ = ((π / μₚ) * (Vₛ - p.R*I) - d′*I) / (p.n*X + d)
     μ₋ = p.μₚ - μ₀
-    I′ = (2*π*Vₛ - 2*π*IR - I*(μ₀*Y*E*d′+μ₋*2*p.rₚ*D*d′))/(μ₀*Y*(J+G)+μ₋*2*p.rₚ*(H+F))
-    d′ = (2*π*Vₛ - 2*π*IR - I′*(μ₀*Y*(J+G)+μ₋*2*p.rₚ*(H+F)))/(μ₀*Y*E+μ₋*2*p.rₚ*D)
-    V = Vᵦ-Vₛ
-    Vₛ′ = -I/p.C
-    P = I * V
-    du .= [d′, d″, I′, Vₛ′, P]
+    K=μ₀*Y*(J+G)+μ₋*2*p.rₚ*(H+F)
+    O=μ₀*Y*E + μ₋*2*p.rₚ*D
+
+    I″ = (d″*O*I^2 - 2*π*Vₛ′*I + 2*πVₛI′ - K*I′^2)/(-K*I)
+
+    #I′ = ((π / μₚ) * (Vₛ - p.R*I) - d′*I) / (p.n*X + d)
+    tmp = (2*π*Vₛ - 2*π*IR - I*d′*O)/K
+    #it is necessary to use tmp, because I′ must not be overwritten before it's used in d′
+    d′ = (2*π*Vₛ - 2*π*IR - I′*K)/(I*O)
+    I′ = tmp
+    du .= [d′, d″, I′, I″, Vₛ′]
     return nothing
 end
 
@@ -94,7 +99,7 @@ eq!(du, sol.u[1], (; M, R, C, c, n, Fₙ), 0)
 println(n, ", ",M, ", ", R, ", ", Eₛ, ", ", sol.u[end][2],
         ", ", sol[3,t],", ", du[3], ", ", efficiency, "%, ",
         sol.u[end][4], ", ", sol.retcode)
-push!(df, (M=M, R=R, Eₛ=Eₛ, C=C, turns=n, t=sol.t[end], v=sol.u[end][2], amps=sol.u[end][3], voltage=sol.u[end][4], power=sol.u[end][5], retcode=sol.retcode))
+push!(df, (M=M, R=R, Eₛ=Eₛ, C=C, turns=n, t=sol.t[end], v=sol.u[end][2], amps=sol.u[end][3], voltage=sol.u[end][5], retcode=sol.retcode))
 #println(sol.u[1], "*******", sol[1], "\n\n******",sol[1,:])
 plot(sol.t,sol[1,:])
 png("distanceByTime.png")

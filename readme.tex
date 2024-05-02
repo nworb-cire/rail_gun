@@ -127,14 +127,69 @@ This entire time we've been thinking about things as scalars, and I sure as heck
 
 \[f = IwB(d) \]
 \[f = I^2w\frac{\mu_p}{2\pi}M(d) \]
-\[f = I^2w\frac{\mu_p}{2\pi}\left(M_{1:N}(d) + M_0(d)\right) \]
-\[f = I^2w\frac{\mu_p}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) \]
 
 Here $f$ is the lorentz force. The total forces acting on the projectile are $f_{net}=f-f_s$ where $f_s$ is the force due to friction against the rails.
 
-\[f_{net}=m\frac{dd^2}{d^2t} \]
-\[\frac{dd^2}{d^2t} = m^{-1}\left(I^2w\frac{\mu_p}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) - f_s\right) \]
+\[f_{net}=m\frac{d^2d}{dt^2} \]
+\[\frac{d^2d}{dt^2} = m^{-1}\left(I^2w\frac{\mu_p}{2\pi}M(d) - f_s\right) \]
 
 And... I think that's it. That's everything. There should now be an equation for each of the four output variables now. It's time to implement this in the code! Good luck dear reader!
+\newpage
+OH NO! dear reader, you've continued reading on! which implies that there was indeed more to read, and we were not done creating out system of differential equations. You have come upon bad luck.
+
+I said that we had a closed form function for each of the variables in $du$. And indeed that is correct. What we do not have is a closed form for each variable in $du$ \emph{only in terms of }$u$. And that's the problem. To be more specific, the equation for $\frac{dd}{dt}$ depends on $\frac{dI}{dt}$. Since the rest of this document only has derivatives and anti derivatives with respect to time (whereas before we also had with respect to $x$ or $l$), I will switch to using newton's notation. 
+
+I will list each element of $du$ as a function $f$ of it's dependent variables. (For this argument it is not relevant what the function is, only it's inputs. If you'd like a refresher, scroll up.)
+
+\[ d' = f_0(I,I', V_s) \]
+
+This is the offending function, because of the input $I'$, which is not in $u$. You may think "We have an equation for $I'$. Why not just substitute?" Here is the equation for $I'$:
+
+\[ I' = f_1(I, d') \]
+
+Because $I'$ depends on $d'$ this approach will go nowhere. Here are the rest of the equations.
+
+\[ d'' = f_2(I,d) \]
+\[ V_s' = f_3(I) \]
+
+Well, if the problem is that $I'$ is not part of $u$, why don't we just add it? We will of course, have to add it's derivative to $du$, and we don't have a formula for $I''$.
+
+Ah, but we do! We are free to choose any of these equations and take the derivative of both sides. If we choose one dependent on $I'$, it's derivative will contain $I''$. Let us choose our problem equation.
+
+\[ d'' = f_0'(I,I',I'',V_s,V_s') \]
+
+Because of the chainrule, this equation has more variables in it. Now, $I''$ is an implicit function of $I, I', d''$. We call this function $g$.
+
+\[ I'' = g(I,I',d'',V_s,V_s') \]
+
+Hazzah! We've now fixed our problem with $d'$, because now all its dependent variables are in $u$. But the astute reader has probably noticed something else is wrong. $I''$ depends on $d''$ and $V_s'$, neither of which are in $u$. We have just pushed the problem down one level. In fact we've compounded the problem because we now have 2 variables not in $u$, whereas before we had one.
+
+Hold up. We can substitute in other values for $d''$ and $V_s'$. So we have:
+
+\[ I'' = g(I,I',f_2(I,d),V_s,f_3(I)) \]
+
+And so $I''$ is some function $g$. Now to find out what that function is!
+
+We begin by taking the derivate of $d'$.
+
+\[ d' = \frac{2\pi V_s - 2\pi IR - I'\left(\mu_0Y(J+G) + \mu_dw(H+F)\right)}{I\left(\mu_0YE + \mu_dwD\right)} \]
+
+Despite all the decluttering substitutions we've made, this is still a horrible mess. More substitutions!
+
+\[ K = \mu_0Y(J+G) + \mu_dw(H+F) \]
+\[ O = \mu_0YE + \mu_dwD \]
+\[ d' = \frac{2\pi V_s - 2\pi IR - I'K}{IO} \]
+\[ d' = \frac{2\pi V_s}{IO}-\frac{2\pi R}{O}-\frac{I'K}{IO} \]
+\[ d'' = \frac{2\pi V_s'I-2\pi V_sI' - KI''I + KI'^2}{OI^2} \]
+
+We solve for $I''$.
+
+\[ I'' = \frac{d''OI^2 - 2\pi V_s'I + 2\pi V_sI' -KI'^2}{-KI} \]
+
+And substitute in the values of $V_s'$ and $d''$
+
+\[ I'' = \frac{m^{-1}\left(I^2w\frac{\mu_p}{2\pi}M(d) - f_s\right)OI^2 - 2\pi \frac{-I}{C}I + 2\pi V_sI' -KI'^2}{-KI} \]
+
+And now to implement this in code. Good luck dear reader!
 
 \end{document}
