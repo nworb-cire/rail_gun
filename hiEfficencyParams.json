@@ -7,6 +7,7 @@
     "contactPressure": 15.0,
     "railLength":0.3,
     "railHeight":0.01,
+    "railWidth":0.01,
     "projectileDiameter":0.006,
     "projectileLength":0.006,
     "projectileDensity":7870000.0,

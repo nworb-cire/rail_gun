@@ -107,12 +107,11 @@ We've gone all the way down the stack and almost all the way back up again. So j
 
 \[V_s-V_b=IR\]
 
-We will use the equation for $V_b$ as it is during the computation of $V_s$. But for now we will rearange and combine with the above to solve for $\frac{dd}{dt}$ and $\frac{dI}{dt}$.
+We rearange and combine with the above to solve for $\frac{dI}{dt}$.
 
 \[V_b = V_s - IR \]
 \[\frac{1}{2\pi}\frac{dI}{dt}\left(\mu_0Y(J+G) + \mu_dw(H+F)\right) + \frac{1}{2\pi}I\left(\mu_0YE\frac{dd}{dt} + \mu_dwD\frac{dd}{dt}\right) = V_s - IR \]
 \[\frac{dI}{dt} = \frac{2\pi V_s - 2\pi IR - I\left(\mu_0YE\frac{dd}{dt} + \mu_dwD\frac{dd}{dt}\right)}{\mu_0Y(J+G) + \mu_dw(H+F)} \]
-\[\frac{dd}{dt} = \frac{2\pi V_s - 2\pi IR - \frac{dI}{dt}\left(\mu_0Y(J+G) + \mu_dw(H+F)\right)}{I\left(\mu_0YE + \mu_dwD\right)} \]
 
 Now that we have $V_b$ (which is the voltage pushing back against the supply voltage due to changing flux, faraday's law), we can talk about $V_s$, the source voltage. The source voltage is due to a capacitor. Capacitors decay exponentially to an input voltage. I.e. if we have the capacitor at 100 volts, and we're "charging" it at 80 volts, it will decay to 80 volts. You can read more \href{https://physics.stackexchange.com/questions/800396/discharge-of-a-capacitor-with-variable-backvoltage}{here}, where I got the following equation.
 
@@ -135,6 +134,6 @@ Here $f$ is the lorentz force. The total forces acting on the projectile are $f_
 \[f_{net}=m\frac{dd^2}{d^2t} \]
 \[\frac{dd^2}{d^2t} = m^{-1}\left(I^2w\frac{\mu_p}{2\pi}\left(M_{1:N}(d) + \frac{d}{r\sqrt{r^2-d^2}}\right) - f_s\right) \]
 
-And... I think that's it. That's everything. There should now be an equation for each of the four output variables now. It's time to implement this in the code! Good luck dear reader!
+And... I think that's it. That's everything. There should now be an equation for each of the four output variables now (Remember, the equation for $d'$ is $d'=d'$. If you're wondering why that's valid here, but I can't just say $v_s = v_s$, it's because $d'$ is already in the input vector). It's time to implement this in the code! Good luck dear reader!
 
 \end{document}

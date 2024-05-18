@@ -20,7 +20,7 @@ params = JSON.parsefile(ARGS[1])
 const rail_length = params["railLength"] * m
 
 function eq!(du, u, p, t)
-    d, d′, I, Vₛ, _ = u
+    d, d′, I, Vₛ = u
     r = p.Wᵣ + p.rₚ # r is the radius from the center of the bore to the edge of the rail
     Y = 2*r + 2*p.n*p.Wᵥ # Y is the total width
     X = rail_length
@@ -39,12 +39,9 @@ function eq!(du, u, p, t)
 
     #I′ = ((π / μₚ) * (Vₛ - p.R*I) - d′*I) / (p.n*X + d)
     μ₋ = p.μₚ - μ₀
-    I′ = (2*π*Vₛ - 2*π*IR - I*(μ₀*Y*E*d′+μ₋*2*p.rₚ*D*d′))/(μ₀*Y*(J+G)+μ₋*2*p.rₚ*(H+F))
-    d′ = (2*π*Vₛ - 2*π*IR - I′*(μ₀*Y*(J+G)+μ₋*2*p.rₚ*(H+F)))/(μ₀*Y*E+μ₋*2*p.rₚ*D)
-    V = Vᵦ-Vₛ
+    I′ = (2*π*Vₛ - 2*π*I*p.R - I*(μ₀*Y*E*d′+μ₋*2*p.rₚ*D*d′))/(μ₀*Y*(J+G)+μ₋*2*p.rₚ*(H+F))
     Vₛ′ = -I/p.C
-    P = I * V
-    du .= [d′, d″, I′, Vₛ′, P]
+    du .= [d′, d″, I′, Vₛ′]
     return nothing
 end
 
@@ -79,8 +76,7 @@ u₀ = [
     0m,
     vᵢ,
     0.0A,
-    Eₛ,
-    0.0J,
+    Eₛ
 ]
 prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
 sol = solve(remake(prob; p=(; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ, μₚ)), Tsit5() ; callback=cb)
@@ -89,12 +85,12 @@ Eᵦ = uconvert(J, 0.5 * C * (Eₛ^2 -sol.u[end][4]^2))
 println(Eₚ, Eᵦ)
 efficiency = Eₚ/Eᵦ
 t = argmax(sol[3,:])
-du = [0.0m/s,0.0m/(s^2),0.0A/s,0.0V/s,0.0]
-eq!(du, sol.u[1], (; M, R, C, c, n, Fₙ), 0)
+du = [0.0m/s,0.0m/(s^2),0.0A/s,0.0V/s]
+eq!(du, sol.u[1], (; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ, μₚ), 0)
 println(n, ", ",M, ", ", R, ", ", Eₛ, ", ", sol.u[end][2],
         ", ", sol[3,t],", ", du[3], ", ", efficiency, "%, ",
         sol.u[end][4], ", ", sol.retcode)
-push!(df, (M=M, R=R, Eₛ=Eₛ, C=C, turns=n, t=sol.t[end], v=sol.u[end][2], amps=sol.u[end][3], voltage=sol.u[end][4], power=sol.u[end][5], retcode=sol.retcode))
+push!(df, (M=M, R=R, Eₛ=Eₛ, C=C, turns=n, t=sol.t[end], v=sol.u[end][2], amps=sol.u[end][3], voltage=sol.u[end][4], retcode=sol.retcode))
 #println(sol.u[1], "*******", sol[1], "\n\n******",sol[1,:])
 plot(sol.t,sol[1,:])
 png("distanceByTime.png")
