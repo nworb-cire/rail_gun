@@ -25,22 +25,61 @@ function eq!(du, u, p, t)
     Y = 2*r + 2*p.n*p.Wᵥ # Y is the total width
     X = rail_length
     Alist = [r+n*p.Wᵥ for n=1:p.n]
-    M = sum([ ((X-d)/(A^2+(X-d)^2)^0.5 + d/(A^2+d^2)^0.5)/A for A in Alist ])
-    M += d / (r^2+d^2)^0.5 / r
-    Fₛ = p.c * p.Fₙ * sign(d′)
-    d″ = (I^2*p.rₚ*p.μₚ*M / (π * p.M)) - (Fₛ / p.M)
-
-    D = sum([ (2*(A^2 + X^2)^0.5 - 2*A)/A for A in Alist]) + ((r^2 + X^2)^0.5 - (r^2 + (d-x)^2)^0.5 -r + (r^2+d^2)^0.5)/r
+    if (p.n == 0)
+        M = d / (r^2+d^2)^0.5 / r
+        D = ((r^2 + X^2)^0.5 - (r^2 + (d-X)^2)^0.5 -r + (r^2+d^2)^0.5)/r
+        F = (2*(r^2+d^2)^0.5 -2*r)/r
+        G = 2*d*d′ / (r*(r^2+d^2)^0.5)
+    else
+        M = sum([ ((X-d)/(A^2+(X-d)^2)^0.5 + d/(A^2+d^2)^0.5)/A for A in Alist ])
+        M += d / (r^2+d^2)^0.5 / r
+        D = sum([ (2*(A^2 + X^2)^0.5 - 2*A)/A for A in Alist]) + ((r^2 + X^2)^0.5 - (r^2 + (d-X)^2)^0.5 -r + (r^2+d^2)^0.5)/r
+        F = sum([ ((A^2+d^2)^0.5 - (A^2 + (X-d)^2)^0.5 - A + (A^2+X^2)^0.5)/A for A in Alist]) + (2*(r^2+d^2)^0.5 -2*r)/r
+        G = sum([ (d*d′/(A^2+d^2)^0.5 + (X-d)*d′/(A^2+(X-d)^2)^0.5)/A for A in Alist]) + 2*d*d′ / (r*(r^2+d^2)^0.5)
+    end
     E = (d*d′/(r^2+d^2)^0.5 - (d-X)d′/(r^2 + (d-X)^2)^0.5)/r
-    F = sum([ ((A^2+d^2)^0.5 - (A^2 + (X-d)^2)^0.5 - A + (A^2+X^2)^0.5)/A for A in Alist]) - (2*(r^2+d^2)^0.5 -2*r)/r
-    G = sum([ (d*d′/(A^2+d^2)^0.5 + (X-d)*d′/(A^2+(X-d)^2)^0.5)/A for A in Alist]) - 2*d*d′ / (r*(r^2+d^2)^0.5)
+    #this is a hack to prevent friction from messing things up when velocity is close to zero
+    if (d′ < 0.01m/s)
+        Fₛ = 0N
+    else
+        Fₛ = p.c * p.Fₙ * sign(d′)
+    end
+    d″ = (I^2*p.rₚ*μ₀*M / (π * p.M)) - (Fₛ / p.M)
+
 
     #I′ = ((π / μₚ) * (Vₛ - p.R*I) - d′*I) / (p.n*X + d)
     Vᵦ = Vₛ - I*p.R
-    I′ = (Vᵦ - I*((Y*μ₀)/(2*π))*((p.n -1)*E + G))/(μ₀*Y*/(2*π)*((p.n - 1)*D + F) )
+    I′ = (Vᵦ - I*((Y*μ₀)/(2*π))*(p.n*E + G))/(μ₀*Y/(2*π)*(p.n*D + F) )
     Vₛ′ = -I/p.C
-    du .= [d′, d″, I′, Vₛ′]
+    du .= [d′, uconvert(m/s^2,d″), uconvert(A/s, I′), uconvert(V/s, Vₛ′)]
+    #println(u)
+    #println(du)
+    #println(t)
     return nothing
+end
+
+function runSim(vec)
+    M = vec[0]
+    Wᵥ = vec[1]
+    vᵢ = min(10m/s, vec[2])
+    Eₛ = vec[3]
+    C = 2*energy/(Eₛ^2)
+    u₀ = [
+        0.01m,
+        vᵢ,
+        0.0A,
+        Eₛ
+    ]
+    Aₗ = Wᵥ*Wₕ
+    Rₘ = ρ*(n+1)*rail_length/Aₗ
+    R = Rᵢ + Rₘ 
+    #things that can change M; antecedants to R; r_p, Wᵣ, Wᵥ
+    prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
+    sol = solve(remake(prob; p=(; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ)), Tsit5() ; callback=cb)
+    Eₚ = uconvert(J, 0.5 * M*(sol.u[end][2]^2 - vᵢ^2))
+    Eᵦ = uconvert(J, 0.5 * C * (Eₛ^2 -sol.u[end][4]^2))
+    println(Eₚ, Eᵦ)
+    efficiency = Eₚ/Eᵦ
 end
 
 # callback: stop when distance is equal to rail length
@@ -63,28 +102,26 @@ Wᵣ = params["railWidth"]m
 lₚ = params["projectileLength"]m
 Dₚ = params["projectileDensity"]g/m^3
 vᵢ = params["initialVelocity"]m/s
-μᵣ = params["relativePermeability"]
-μₚ = μᵣ * μ₀
 M = Dₚ*lₚ*π*rₚ^2
 ρ = 1.77 * 10^-8*Ω*m # resistivity of copper
-Rₘ = ρ*n*rail_length/Aₗ
-println(Rₘ, " vs ", Rᵢ)
+Rₘ = ρ*(n+1)*rail_length/Aₗ
+#println(Rₘ, " vs ", Rᵢ)
 R = Rᵢ + Rₘ 
 u₀ = [
-    0m,
+    0.01m,
     vᵢ,
     0.0A,
     Eₛ
 ]
 prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
-sol = solve(remake(prob; p=(; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ, μₚ)), Tsit5() ; callback=cb)
+sol = solve(remake(prob; p=(; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ)), Tsit5() ; callback=cb)
 Eₚ = uconvert(J, 0.5 * M*(sol.u[end][2]^2 - vᵢ^2))
 Eᵦ = uconvert(J, 0.5 * C * (Eₛ^2 -sol.u[end][4]^2))
 println(Eₚ, Eᵦ)
 efficiency = Eₚ/Eᵦ
 t = argmax(sol[3,:])
 du = [0.0m/s,0.0m/(s^2),0.0A/s,0.0V/s]
-eq!(du, sol.u[1], (; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ, μₚ), 0)
+eq!(du, sol.u[1], (; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ), 0)
 println(n, ", ",M, ", ", R, ", ", Eₛ, ", ", sol.u[end][2],
         ", ", sol[3,t],", ", du[3], ", ", efficiency, "%, ",
         sol.u[end][4], ", ", sol.retcode)

@@ -72,13 +72,13 @@ Now from $0$ to $d$.
 
 \[ \int_0^d Bdx = \frac{\mu I}{2\pi} \sum A^{-1} ( \sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2}) + \frac{\mu I}{2\pi} r^{-1} ( \sqrt{r^2 + d^2} - \sqrt{r^2 + (d-d)^2}) \]
 \[ - \frac{\mu I}{2\pi} \sum A^{-1} ( \sqrt{A^2 + 0^2} - \sqrt{A^2 + (X-0)^2}) - \frac{\mu I}{2\pi} r^{-1} ( \sqrt{r^2 + 0^2} - \sqrt{r^2 + (d-0)^2}) \]
-\[ = \frac{\mu I}{2\pi} \left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) -r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right)\]
+\[ = \frac{\mu I}{2\pi} \left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) + r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right)\]
 
 We will plug these values in for the equation for $\phi$, which, as a reminder is: 
 
 \[\phi = Y(N-1)\int_0^X Bdx + Y \int_0^d Bdx \]
 \[ = Y(N-1)\left[\frac{\mu I}{2\pi} \left(\sum A^{-1} ( 2\sqrt{A^2 + X^2} - 2A) +  r^{-1}(\sqrt{r^2 + X^2} - \sqrt{r^2 + (d-X)^2} - r + \sqrt{r^2 + d^2})\right)\right] \] 
-\[ + Y \left[\frac{\mu I}{2\pi} \left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) -r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right)\right]\]
+\[ + Y \left[\frac{\mu I}{2\pi} \left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) + r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right)\right]\]
 
 Remember, the reason we're interested in $\phi$ is because it's derivative appears in this equation.
 
@@ -87,20 +87,20 @@ Remember, the reason we're interested in $\phi$ is because it's derivative appea
 So we take the derivative. By the multiplication rule we have:
 \[ \frac{d\phi}{dt} = I^\prime \frac{Y(N-1)\mu}{2\pi}\left(\sum A^{-1} ( 2\sqrt{A^2 + X^2} - 2A) +  r^{-1}(\sqrt{r^2 + X^2} - \sqrt{r^2 + (d-X)^2} - r + \sqrt{r^2 + d^2})\right) \]
 \[ + I \frac{Y(N-1)\mu}{2\pi} \frac{d}{dt}\left(\sum A^{-1} ( 2\sqrt{A^2 + X^2} - 2A) +  r^{-1}(\sqrt{r^2 + X^2} - \sqrt{r^2 + (d-X)^2} - r + \sqrt{r^2 + d^2})\right) \]
-\[ + I^\prime \frac{Y\mu}{2\pi} \left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) -r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right) \]
-\[ + I \frac{Y\mu}{2\pi} \frac{d}{dt}\left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) -r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right) \]
+\[ + I^\prime \frac{Y\mu}{2\pi} \left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) +r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right) \]
+\[ + I \frac{Y\mu}{2\pi} \frac{d}{dt}\left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) +r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right) \]
 
 \[ = \frac{d\phi}{dt} = I^\prime \frac{Y(N-1)\mu}{2\pi}\left(\sum A^{-1} ( 2\sqrt{A^2 + X^2} - 2A) +  r^{-1}(\sqrt{r^2 + X^2} - \sqrt{r^2 + (d-X)^2} - r + \sqrt{r^2 + d^2})\right) \]
 \[ + I \frac{Y(N-1)\mu}{2\pi} \left(r^{-1}( \frac{dd^\prime}{\sqrt{r^2 + d^2}} - \frac{(d-X)d^\prime}{\sqrt{r^2 + (d-X)^2}})\right) \]
-\[ + I^\prime \frac{Y\mu}{2\pi} \left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) -r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right) \]
-\[ + I \frac{Y\mu}{2\pi} \left(\sum A^{-1} \left(\frac{dd^\prime}{\sqrt{A^2 + d^2}} + \frac{(X-d)d^\prime}{\sqrt{A^2 + (X-d)^2}}\right) -r^{-1} (\frac{2dd^\prime}{\sqrt{r^2 + d^2}}) \right) \]
+\[ + I^\prime \frac{Y\mu}{2\pi} \left(\sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) +r^{-1} (2\sqrt{r^2 + d^2} - 2r) \right) \]
+\[ + I \frac{Y\mu}{2\pi} \left(\sum A^{-1} \left(\frac{dd^\prime}{\sqrt{A^2 + d^2}} + \frac{(X-d)d^\prime}{\sqrt{A^2 + (X-d)^2}}\right) +r^{-1} (\frac{2dd^\prime}{\sqrt{r^2 + d^2}}) \right) \]
 
 This is getting to be a cumbersome equation. We introduce the following substitutions for brevity.
 
 \[ D = \sum A^{-1} ( 2\sqrt{A^2 + X^2} - 2A) +  r^{-1}(\sqrt{r^2 + X^2} - \sqrt{r^2 + (d-X)^2} - r + \sqrt{r^2 + d^2}) \]
 \[ E = r^{-1}( \frac{dd^\prime}{\sqrt{r^2 + d^2}} - \frac{(d-X)d^\prime}{\sqrt{r^2 + (d-X)^2}}) \]
-\[ F = \sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) -r^{-1} (2\sqrt{r^2 + d^2} - 2r) \] 
-\[ G = \sum A^{-1} \left(\frac{dd^\prime}{\sqrt{A^2 + d^2}} + \frac{(X-d)d^\prime}{\sqrt{A^2 + (X-d)^2}}\right) -r^{-1} (\frac{2dd^\prime}{\sqrt{r^2 + d^2}}) \]
+\[ F = \sum A^{-1} \left(\sqrt{A^2 + d^2} - \sqrt{A^2 + (X-d)^2} - A + \sqrt{A^2 + X^2}\right) +r^{-1} (2\sqrt{r^2 + d^2} - 2r) \] 
+\[ G = \sum A^{-1} \left(\frac{dd^\prime}{\sqrt{A^2 + d^2}} + \frac{(X-d)d^\prime}{\sqrt{A^2 + (X-d)^2}}\right) +r^{-1} (\frac{2dd^\prime}{\sqrt{r^2 + d^2}}) \]
 \[ \frac{d\phi}{dt} = I^\prime \frac{Y(N-1)\mu}{2\pi}D + I \frac{Y(N-1)\mu}{2\pi}E + I^\prime \frac{Y\mu}{2\pi}F + I\frac{Y\mu}{2\pi}G \]
 
 Now to combine like terms and solve for $I^\prime$.
