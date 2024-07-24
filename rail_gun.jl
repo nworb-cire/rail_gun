@@ -3,6 +3,8 @@ using Plots
 using Unitful: Quantity, m, s, ms, A, V, Ω, g, N, J, F, @u_str, ustrip, uconvert
 using Distributions
 using JSON
+using DataFrames
+using Optim
 
 include("solver.jl")
 
@@ -18,6 +20,27 @@ default_params = (
 
 params = JSON.parsefile(ARGS[1])
 const rail_length = params["railLength"] * m
+df = DataFrame()
+nₚ = params["numCapacitors"]
+Eₛ = params["capacitorVoltage"]*V
+C = params["capacitance"]*F * nₚ
+Rᵢ = params["internalResistance"]*Ω/nₚ
+c = params["coefficientOfFriction"]
+Fₙ = params["contactPressure"]*N
+n = params["numberOfCoils"]
+Wᵥ = params["wireWidth"]m
+Wₕ = params["wireHeight"]m
+Aₗ = Wᵥ*Wₕ
+rₚ = params["projectileDiameter"]m/2
+Wᵣ = params["railWidth"]m
+lₚ = params["projectileLength"]m
+Dₚ = params["projectileDensity"]g/m^3
+vᵢ = params["initialVelocity"]m/s
+M = Dₚ*lₚ*π*rₚ^2
+ρ = 1.77 * 10^-8*Ω*m # resistivity of copper
+Rₘ = ρ*(n+1)*rail_length/Aₗ
+#println(Rₘ, " vs ", Rᵢ)
+R = Rᵢ + Rₘ 
 
 function eq!(du, u, p, t)
     d, d′, I, Vₛ = u
@@ -52,61 +75,54 @@ function eq!(du, u, p, t)
     I′ = (Vᵦ - I*((Y*μ₀)/(2*π))*(p.n*E + G))/(μ₀*Y/(2*π)*(p.n*D + F) )
     Vₛ′ = -I/p.C
     du .= [d′, uconvert(m/s^2,d″), uconvert(A/s, I′), uconvert(V/s, Vₛ′)]
-    #println(u)
-    #println(du)
-    #println(t)
     return nothing
-end
-
-function runSim(vec)
-    M = vec[0]
-    Wᵥ = vec[1]
-    vᵢ = min(10m/s, vec[2])
-    Eₛ = vec[3]
-    C = 2*energy/(Eₛ^2)
-    u₀ = [
-        0.01m,
-        vᵢ,
-        0.0A,
-        Eₛ
-    ]
-    Aₗ = Wᵥ*Wₕ
-    Rₘ = ρ*(n+1)*rail_length/Aₗ
-    R = Rᵢ + Rₘ 
-    #things that can change M; antecedants to R; r_p, Wᵣ, Wᵥ
-    prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
-    sol = solve(remake(prob; p=(; M, R, C, c, n, Fₙ, rₚ, Wᵣ, Wᵥ)), Tsit5() ; callback=cb)
-    Eₚ = uconvert(J, 0.5 * M*(sol.u[end][2]^2 - vᵢ^2))
-    Eᵦ = uconvert(J, 0.5 * C * (Eₛ^2 -sol.u[end][4]^2))
-    println(Eₚ, Eᵦ)
-    efficiency = Eₚ/Eᵦ
 end
 
 # callback: stop when distance is equal to rail length
 cb = ContinuousCallback((u, t, i) -> ustrip(rail_length - u[1]), terminate!)
 
-using DataFrames
-df = DataFrame()
-nₚ = params["numCapacitors"]
-Eₛ = params["capacitorVoltage"]*V
-C = params["capacitance"]*F * nₚ
-Rᵢ = params["internalResistance"]*Ω/nₚ
-c = params["coefficientOfFriction"]
-Fₙ = params["contactPressure"]*N
-n = params["numberOfCoils"]
-Wᵥ = params["wireWidth"]m
-Wₕ = params["wireHeight"]m
-Aₗ = Wᵥ*Wₕ
-rₚ = params["projectileDiameter"]m/2
-Wᵣ = params["railWidth"]m
-lₚ = params["projectileLength"]m
-Dₚ = params["projectileDensity"]g/m^3
-vᵢ = params["initialVelocity"]m/s
-M = Dₚ*lₚ*π*rₚ^2
-ρ = 1.77 * 10^-8*Ω*m # resistivity of copper
-Rₘ = ρ*(n+1)*rail_length/Aₗ
-#println(Rₘ, " vs ", Rᵢ)
-R = Rᵢ + Rₘ 
+function runSim(vec)
+    println(vec)
+    Wᵥ = vec[1]
+    vᵢ = min(10m/s, vec[2])
+    Emf_source = min(10000V, vec[3])
+    M = max(1g,vec[4])
+    Wᵣ = vec[5]
+    C_new = C * Eₛ / Emf_source
+    u₀ = [
+        0.01m,
+        vᵢ,
+        0.0A,
+        Emf_source
+    ]
+    Aₗ = Wᵥ*Wₕ
+    Rᵣ = 2*ρ * rail_length/(Wᵣ*0.02m)
+    Rₘ = 2*ρ*(n)*rail_length/Aₗ
+    R = Rᵢ + Rₘ + Rᵣ
+    #things that can change M; antecedants to R; r_p, Wᵣ, Wᵥ
+    prob = ODEProblem(eq!, u₀, (0.0s, 500ms), default_params)
+    sol = solve(remake(prob; p=(; M, R, C=C_new, c, n, Fₙ, rₚ, Wᵣ, Wᵥ)), Tsit5() ; callback=cb)
+    Eₚ = uconvert(J, 0.5 * M*(sol.u[end][2]^2 - vᵢ^2))
+    Eᵦ = uconvert(J, 0.5 * C_new * (Emf_source^2 -sol.u[end][4]^2))
+    println(Eₚ, Eᵦ)
+    efficiency = Eₚ/Eᵦ
+    return efficiency
+end
+
+initialVector = [
+    Wᵥ,
+    vᵢ,
+    Eₛ,
+    M,
+    0.02m
+]
+print(initialVector);
+#out = runSim(initialVector)
+#println(out)
+optimalVector = Optim.minimizer(optimize(runSim, initialVector, BFGS(); autodiff = :forward))
+println("\n\n And we're done!\n");
+println(optimalVector);
+"""
 u₀ = [
     0.01m,
     vᵢ,
@@ -135,3 +151,4 @@ plot(sol.t,sol[3,:])
 png("ampsByTime.png")
 plot(sol.t,sol[4,:])
 png("voltageByTime.png")
+"""
