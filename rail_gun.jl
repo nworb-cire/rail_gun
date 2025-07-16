@@ -18,7 +18,8 @@ default_params = (
 )
 
 params = JSON.parsefile(ARGS[1])
-rail_length = ustrip(params["railLength"] * m)
+beg = ustrip(params["extraCircuitDistance"]m)
+rail_length = ustrip(params["railLength"] * m) + beg
 df = DataFrame()
 nₚ = params["numCapacitors"]
 Eₛ = ustrip(params["capacitorVoltage"]*V)
@@ -27,53 +28,41 @@ Rᵢ = ustrip(params["internalResistance"]*Ω/nₚ)
 c = ustrip(params["coefficientOfFriction"])
 Fₙ = ustrip(params["contactPressure"]*N)
 n = ustrip(params["numberOfCoils"])
-Wᵥ = ustrip(params["wireWidth"]m)
-Wₕ = ustrip(params["wireHeight"]m)
-Aₗ = Wᵥ*Wₕ
 rₚ = ustrip(params["projectileWidth"]m/2)
 Hₚ = ustrip(params["projectileHeight"]m)
 Wᵣ = ustrip(params["railWidth"]m)
+Hᵣ = ustrip(params["railHeight"]m)
 lₚ = ustrip(params["projectileLength"]m)
 Dₚ = ustrip(params["projectileDensity"]kg/m^3)
 vᵢ = ustrip(params["initialVelocity"]m/s)
 μH = ustrip(params["externalMagneticField"]T)
 M = Dₚ*lₚ*2*rₚ*Hₚ
-ρ = ustrip(1.77 * 10^-8*Ω*m) # resistivity of copper
-Rₘ = ρ*(n+1)*rail_length/Aₗ
-#println(Rₘ, " vs ", Rᵢ)
-R = Rᵢ + Rₘ 
+ρ = ustrip(1.68 * 10^-8*Ω*m) # resistivity of copper
+ρ = ustrip(2.82 * 10^-8*Ω*m) # resistivity of aluminum
+ρ = ustrip(5.6 * 10^-8*Ω*m) # resistivity of tungsten
+ρ = ustrip(5.9 * 10^-8*Ω*m) # resistivity of zink
+ρ = ustrip(4.20 * 10^-7*Ω*m) # resistivity of titanium
+ρ = ustrip(6.9 * 10^-7*Ω*m) # resistivity of stainless steel
+R = Rᵢ 
 
 function eq!(du, u, p, t)
     d, d′, I, Vₛ = u
-    r = p.Wᵣ + p.rₚ # r is the radius from the center of the bore to the edge of the rail
-    Y = 2*r + 2*p.n*p.Wᵥ # Y is the total width
-    X = p.rail_length
-    Alist = [r+n*p.Wᵥ for n=1:p.n]
-    if (p.n == 0)
-        M = d / (r^2+d^2)^0.5 / r
-        D = ((r^2 + X^2)^0.5 - (r^2 + (d-X)^2)^0.5 -r + (r^2+d^2)^0.5)/r
-        F = (2*(r^2+d^2)^0.5 -2*r)/r
-        G = 2*d*d′ / (r*(r^2+d^2)^0.5)
-    else
-        M = sum([ ((X-d)/(A^2+(X-d)^2)^0.5 + d/(A^2+d^2)^0.5)/A for A in Alist ])
-        M += d / (r^2+d^2)^0.5 / r
-        D = sum([ (2*(A^2 + X^2)^0.5 - 2*A)/A for A in Alist]) + ((r^2 + X^2)^0.5 - (r^2 + (d-X)^2)^0.5 -r + (r^2+d^2)^0.5)/r
-        F = sum([ ((A^2+d^2)^0.5 - (A^2 + (X-d)^2)^0.5 - A + (A^2+X^2)^0.5)/A for A in Alist]) + (2*(r^2+d^2)^0.5 -2*r)/r
-        G = sum([ (d*d′/(A^2+d^2)^0.5 + (X-d)*d′/(A^2+(X-d)^2)^0.5)/A for A in Alist]) + 2*d*d′ / (r*(r^2+d^2)^0.5)
-    end
-    E = (d*d′/(r^2+d^2)^0.5 - (d-X)d′/(r^2 + (d-X)^2)^0.5)/r
+    Aᵪ = Wᵣ*Hᵣ # cross sectional area of one rail
+    R = ρ*p.n*d/Aᵪ # resistance in the rails
+    R += p.R # resistance in the whole system
+    r = p.Wᵣ/2 + p.rₚ # r is the radius from the center of the bore to the center of the rail
+    Y = 2*p.rₚ # Y is the projectile width
+    M = p.n*d / (r^2+d^2)^0.5 / r
     #this is a hack to prevent friction from messing things up when velocity is close to zero
     if (d′ < ustrip(0.01m/s))
         Fₛ = ustrip(0N)
     else
         Fₛ = p.c * p.Fₙ * sign(d′)
     end
-    d″ = (I^2*p.rₚ*μ₀*M / (π * p.M)) + (I*2*p.rₚ*μH/p.M) - (Fₛ / p.M)
+    d″ = (p.n*I^2*p.rₚ*μ₀*M / (π * p.M)) + (p.n*I*2*p.rₚ*μH/p.M) - (Fₛ / p.M)
 
-
-    #I′ = ((π / μₚ) * (Vₛ - p.R*I) - d′*I) / (p.n*X + d)
-    Vᵦ = Vₛ - I*p.R
-    I′ = (Vᵦ - I*((Y*μ₀)/(2*π))*(p.n*E + G) - μH*Y*d′)/(μ₀*Y/(2*π)*(p.n*D + F) )
+    Vᵦ = Vₛ - I*R
+    I′ = (Vᵦ - I*((Y*p.n^2*μ₀)/(π))*(d*d′/(r^2+d^2)^0.5/r) - μH*Y*d′)/(μ₀*Y*p.n^2/(π)*((r^2+ d^2)^0.5-r) )
     Vₛ′ = -I/p.C
     du .= [d′, d″, I′, Vₛ′]
     return nothing
@@ -91,21 +80,18 @@ function runSim(vec)
     rail_length = max(ustrip(0.09m), min(ustrip(1m), vec[2]))
     C_new = C
     u₀ = [
-        ustrip(0.01m),
+        beg,
         vᵢ,
         ustrip(0.0A),
         Emf_source
     ]
-    Aₗ = Wᵥ*Wₕ
-    Rᵣ = 2*ρ * rail_length/(Wᵣ*ustrip(0.02m))
-    Rₘ = 2*ρ*(n)*rail_length/Aₗ
-    R = Rᵢ + Rₘ + Rᵣ
     #things that can change M; antecedants to R; r_p, Wᵣ, Wᵥ
     prob = ODEProblem(eq!, u₀, (0.0, 0.5), default_params)
-    sol = solve(remake(prob; p=(; M, R, C=C_new, c, n, Fₙ, rₚ, Wᵣ, Wᵥ, rail_length)), Tsit5() ; callback=cb)
+    sol = solve(remake(prob; p=(; M, R=Rᵢ, C=C_new, c, n, Fₙ, rₚ, Wᵣ, rail_length)), Tsit5() ; callback=cb)
     Eₚ = 0.5 * M*(sol.u[end][2]^2 - vᵢ^2)
     Eᵦ = 0.5 * C_new * (Emf_source^2 -sol.u[end][4]^2)
     println(Eₚ," ", Eᵦ)
+    println(sol.u[end][2])
     efficiency = Eₚ/Eᵦ
     return -efficiency, sol
 end
